@@ -1,0 +1,5 @@
+add_subdirectory(imgui)
+add_subdirectory(flecs)
+add_subdirectory(assimp)
+add_subdirectory(glm)
+add_subdirectory(spdlog)
