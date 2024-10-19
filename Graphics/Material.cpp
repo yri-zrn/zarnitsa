@@ -61,8 +61,9 @@ void Material::Bind(uint32_t textures_starting_slot)
             return;
         }
     )
+    m_StartingSlot = textures_starting_slot;
     m_Shader->Bind();
-    for (size_t type = 0; type < (size_t)TextureType::Last; ++type)
+    for (size_t type = 0; type < (size_t)TextureType::Last+1; ++type)
     {
         if (m_TextureAttached[type])
         {
@@ -82,7 +83,7 @@ int Material::GetTextureAttachmentMask()
     )
     
     int mask = 0;
-    for (size_t type = 0; type < (size_t)TextureType::Last; ++type)
+    for (size_t type = 0; type < (size_t)TextureType::Last+1; ++type)
     {
         if (m_TextureAttached[type])
         {
@@ -90,6 +91,11 @@ int Material::GetTextureAttachmentMask()
         }
     }
     return mask;
+}
+
+DeviceID Material::GetTexture(TextureType type)
+{
+    return m_Textures[(uint32_t)type].GetID();
 }
 
 } // namespace zrn

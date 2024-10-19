@@ -154,9 +154,26 @@ void DebugLayer::OnImGuiRender()
 
     ImGui::Begin("Framebuffer test");
     {
-        ImGui::Image((ImTextureID)m_SandboxLayer->Framebuffer.GetAttachment(0), {1920/4, 1080/4}, {0, 1}, {1, 0});
-        ImGui::Image((ImTextureID)m_SandboxLayer->FramebufferOutline.GetAttachment(0), {1920/4, 1080/4}, {0, 1}, {1, 0});
-        ImGui::Image((ImTextureID)m_SandboxLayer->FramebufferOutline.GetAttachment(1), {1920/4, 1080/4}, {0, 1}, {1, 0});
+        auto renderer = &m_SandboxLayer->Renderer;
+        renderer->GBuffer.BindAttachments(1);
+        ImGui::Image((ImTextureID)renderer->GBuffer.GetAttachment(0), {1920/4, 1080/4}, {0, 1}, {1, 0});
+        ImGui::Image((ImTextureID)renderer->GBuffer.GetAttachment(1), {1920/4, 1080/4}, {0, 1}, {1, 0});
+        ImGui::Image((ImTextureID)renderer->GBuffer.GetAttachment(2), {1920/4, 1080/4}, {0, 1}, {1, 0});
+        ImGui::Image((ImTextureID)renderer->GBuffer.GetAttachment(3), {1920/4, 1080/4}, {0, 1}, {1, 0});
+        ImGui::Image((ImTextureID)renderer->GBuffer.GetAttachment(4), {1920/4, 1080/4}, {0, 1}, {1, 0});
+        ImGui::Image((ImTextureID)renderer->GBuffer.GetDepth(), {1920/4, 1080/4}, {0, 1}, {1, 0});
+        // ImGui::Image((ImTextureID)renderer->FramebufferOutline.GetAttachment(0), {1920/4, 1080/4}, {0, 1}, {1, 0});
+        // ImGui::Image((ImTextureID)renderer->FramebufferOutline.GetAttachment(1), {1920/4, 1080/4}, {0, 1}, {1, 0});
+    }
+    ImGui::End();
+
+    ImGui::Begin("Material test");
+    {
+        m_SandboxLayer->Material.Bind(4);
+        ImGui::Image((ImTextureID)m_SandboxLayer->Material.GetTexture(TextureType::Albedo),     {256, 256});
+        ImGui::Image((ImTextureID)m_SandboxLayer->Material.GetTexture(TextureType::RoughnessMetallic),  {256, 256});
+        ImGui::Image((ImTextureID)m_SandboxLayer->Material.GetTexture(TextureType::Normal),     {256, 256});
+        ImGui::Image((ImTextureID)m_SandboxLayer->Material.GetTexture(TextureType::Emission),   {256, 256});
     }
     ImGui::End();
 

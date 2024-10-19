@@ -66,13 +66,24 @@ void Framebuffer::CopyTo(Framebuffer& destination)
     glBindFramebuffer(GL_READ_FRAMEBUFFER, m_Framebuffer.ID);
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, destination.m_Framebuffer.ID);
     
-    // BindAttachments(0);
-
     glBlitFramebuffer(0, 0, m_Framebuffer.Width, m_Framebuffer.Height,
-                      0, 0, destination.m_Framebuffer.Width, destination.m_Framebuffer.Height,
-                      GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+                0, 0, destination.m_Framebuffer.Width, destination.m_Framebuffer.Height,
+                GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+    for (uint32_t i = 0; i < m_Framebuffer.ColorAttachmentsCount; ++i)
+    {
+        glDrawBuffer(GL_COLOR_ATTACHMENT0+i);
+        glReadBuffer(GL_COLOR_ATTACHMENT0+i);
+
+        glBlitFramebuffer(0, 0, m_Framebuffer.Width, m_Framebuffer.Height,
+                          0, 0, destination.m_Framebuffer.Width, destination.m_Framebuffer.Height,
+                          GL_COLOR_BUFFER_BIT, GL_NEAREST);
+    }
+    glReadBuffer(GL_COLOR_ATTACHMENT0);
+    glDrawBuffer(GL_COLOR_ATTACHMENT0);
+
     glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+
 }
 
 void Framebuffer::Resize(uint32_t width, uint32_t height)
@@ -86,6 +97,7 @@ void Framebuffer::BindAttachments(uint32_t starting_slot)
     {
         glBindTextureUnit(starting_slot + slot, m_Framebuffer.ColorAttachments[slot]);
     }
+    glBindTextureUnit(starting_slot + m_Framebuffer.ColorAttachmentsCount, m_Framebuffer.DepthAttachment);
 }
 
 GLenum GetGLTextureFormat(TextureFormat format)
@@ -112,6 +124,11 @@ void Framebuffer::ClearAttachment(uint32_t slot, int value)
 DeviceID Framebuffer::GetAttachment(uint32_t slot)
 {
     return m_Framebuffer.ColorAttachments[slot];
+}
+
+DeviceID Framebuffer::GetDepth()
+{
+    return m_Framebuffer.DepthAttachment;
 }
 
 } // namespace zrn

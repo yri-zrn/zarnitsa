@@ -26,8 +26,21 @@ bool Input::IsKeyPressed(Keycode key)
     assert(m_Platform);
     
     GLFWwindow* window = m_Platform->GetCurrentContext()->m_GLFWWindow;
-    return glfwGetKey(window, (int)key);
+    return glfwGetKey(window, (int)key) == GLFW_PRESS;
 }
+
+bool Input::IsKeyDown(Keycode key)
+{
+    GLFWwindow* window = m_Platform->GetCurrentContext()->m_GLFWWindow;
+    return glfwGetKey(window, (int)key) == GLFW_REPEAT;
+}
+
+bool Input::IsKeyReleased(Keycode key)
+{
+    GLFWwindow* window = m_Platform->GetCurrentContext()->m_GLFWWindow;
+    return glfwGetKey(window, (int)key) == GLFW_RELEASE;
+}
+
 
 // bool Input::KeyReleased(Keycode key)
 // {

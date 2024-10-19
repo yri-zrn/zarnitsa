@@ -10,12 +10,11 @@
 
 enum class TextureType
 {
-    None       = -1,
-    Albedo     =  0,
-    Metallic   =  1,
-    Roughness  =  2,
-    Normal     =  3,
-    Emission   =  4,
+    None               = -1,
+    Albedo             =  0,
+    RoughnessMetallic  =  1,
+    Normal             =  2,
+    Emission           =  3,
 
     First = Albedo,
     Last = Emission,
@@ -33,8 +32,9 @@ public:
     Material() = default;
 
     // TEMP: color value is random
-    glm::vec3 Albedo = { 0.8f, 0.2f, 0.7f };
-    glm::vec3 RME    = { 0.0f, 0.0f, 0.0f };
+    glm::vec3 Albedo             = { 0.8f, 0.2f, 0.7f };
+    glm::vec2 RoughnessMetallic  = { 0.0f, 0.0f };
+    glm::vec3 Emission           = { 0.0f, 0.0f, 0.0f };
     uint32_t StartingSlot = 0;
     
     Status Create(GraphicsContext* context, Shader* shader);
@@ -42,13 +42,15 @@ public:
 
     void Bind(uint32_t textures_starting_slot);
     int GetTextureAttachmentMask();
+    DeviceID GetTexture(TextureType type);
 
 private:
-    GraphicsContext* m_Context;
-    Shader*          m_Shader;
+    GraphicsContext* m_Context = nullptr;
+    Shader*          m_Shader = nullptr;
+    uint32_t         m_StartingSlot = 0;
 
-    bool      m_TextureAttached[(size_t)TextureType::Last];
-    Texture   m_Textures[(size_t)TextureType::Last];
+    bool      m_TextureAttached[(size_t)TextureType::Last+1];
+    Texture   m_Textures[(size_t)TextureType::Last+1];
 };
 
 } // namespace zrn

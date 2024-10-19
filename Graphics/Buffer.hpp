@@ -52,7 +52,6 @@ public:
     UniformBuffer() = default;
 
     Status Create(GraphicsContext* context, const void* data, uint32_t size);
-    void Bind(uint32_t slot);
 
     template<typename UniformDataType>
     void Bind();
@@ -60,6 +59,7 @@ public:
     void EditData(const void* data);
 
 private:
+    void Bind(uint32_t slot);
     GraphicsContext* m_Context = nullptr;
     Internal::Buffer m_Buffer;
 };

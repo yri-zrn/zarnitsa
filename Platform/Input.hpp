@@ -15,7 +15,8 @@ public:
     static void Terminate();
 
     static bool IsKeyPressed(Keycode key);
-    static bool KeyReleased(Keycode key);
+    static bool IsKeyDown(Keycode key);
+    static bool IsKeyReleased(Keycode key);
     
     static bool IsMouseButtonPressed(MouseButton button);
     static glm::vec2 GetMousePosition();

@@ -54,6 +54,8 @@ add_executable(Zarin
     Scene/World.cpp
     Scene/AssetManager.hpp
     Scene/AssetManager.cpp
+    Scene/SceneRenderer.hpp
+    Scene/SceneRenderer.cpp
 
     Editor/PropertyEditor.cpp
     Editor/PropertyEditor.hpp

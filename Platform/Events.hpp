@@ -5,6 +5,11 @@
 #include <stdint.h>
 #include <queue>
 #include <string>
+#include <memory>
+#include <atomic>
+#include <condition_variable>
+#include <mutex>
+#include <thread>
 
 namespace zrn
 {
@@ -93,6 +98,15 @@ private:
     static void TrackFileWatcher(FileWatcher& watcher);
 
     static std::queue<Event> m_Queue;
+    // static std::atomic<bool> m_WatcherBuisy;
+    
+    static std::mutex m_WatcherLock;
+    static std::condition_variable m_ConditionVar;
+    static bool m_ProcessingData;
+    static bool m_QuitRequested;
+
+    static std::unique_ptr<std::thread> m_FileWatcherThread;
+    
     static Platform* m_Platform;
 };
 

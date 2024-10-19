@@ -25,11 +25,13 @@
     - Parent objects unable to skew children on scaling
     - CMakeLists.txt uses $ENV{VULKAN_SDK} for linking shaderc
     - ImGuizmo reacts on key events event when they should be handled by ImGui
-!   - All OpenGL resourses that allocates memory do not free it (should add delete functions for resources)
+!   - All OpenGL resourses that allocates memory do not free it (should add destroy functions for resources)
     - Should remove shaderc from dependencies
     - Shader run-time recompilation is slow, because it should run on different thread
 
     - Logger must be initialized before any system because all systems rely on it
+    - OpenGL functions redefined at imgui_impl_opengl3_loader.h
+    - Camera goes crazy when you zoom extra quick
 
 ? TODO:
     - Add compute and geometry shader support
@@ -42,6 +44,8 @@
     - Move Timestep to Application
     - Fix Mesh Loader : it load amount of vertices tripled
     - Make Uniform and Vertex buffers template?
+    - Add texture and vertex purpose fields
+    - Add ability for vertex to have different layouts (like only pos layoyt, layout for G-Buffer, layout for lighting calculations)
 
 ? In progress:
 

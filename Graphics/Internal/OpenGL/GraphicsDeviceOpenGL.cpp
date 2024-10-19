@@ -589,6 +589,7 @@ void GraphicsDeviceOpenGL::DrawDummy(uint32_t vertex_count)
 
 void GraphicsDeviceOpenGL::SubmitVertexLayout(const VertexLayout* layout)
 {
+    // glBindVertexArray(_DummyVertexArray);
     uint32_t offset = 0;
     for (size_t i = 0; i < layout->AttributeCount; ++i)
     {
@@ -714,7 +715,8 @@ Status GraphicsDeviceOpenGL::CreateFramebuffer(Framebuffer* framebuffer, const F
         glDrawBuffer(GL_NONE);
     }
 
-    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE
+        && config->ColorAttachmentsCount != 0)
     {
         ZRN_CORE_ERROR("Created framebuffer is incomplete, abort: {0}", _GetErrorString(glGetError()));
         return { ErrorType::FramebufferIncomplete, _GetErrorString(glGetError()) };
@@ -748,6 +750,7 @@ void GraphicsDeviceOpenGL::BindFramebuffer(Framebuffer* framebuffer, uint32_t sl
 
         for (size_t slot = 0; slot < framebuffer->ColorAttachmentsCount; ++slot)
             glBindTextureUnit(slot, framebuffer->ColorAttachments[slot]);
+        glBindTextureUnit(slot + framebuffer->ColorAttachmentsCount, framebuffer->DepthAttachment);
     }
     else
     {

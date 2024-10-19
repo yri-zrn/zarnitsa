@@ -19,6 +19,8 @@ add_library(zrn_Graphics
     Mesh.cpp
     Material.hpp
     Material.cpp
+    Renderer.hpp
+    Renderer.cpp
 
     Internal/GraphicsDevice.hpp
     Internal/GraphicsDevice.cpp

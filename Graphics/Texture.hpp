@@ -12,6 +12,7 @@ public:
 
     Status Create(GraphicsContext* context, const TextureSpecification& config, const void* data);
     void Bind(uint32_t slot);
+    DeviceID GetID() { return m_Texture.ID; }
 
 private:
     GraphicsContext* m_Context = nullptr;

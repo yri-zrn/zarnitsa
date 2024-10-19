@@ -11,6 +11,13 @@
 namespace zrn
 {
 
+std::mutex EventQueue::m_WatcherLock;
+bool EventQueue::m_ProcessingData = false;
+bool EventQueue::m_QuitRequested = false;
+std::condition_variable EventQueue::m_ConditionVar;
+
+std::unique_ptr<std::thread> EventQueue::m_FileWatcherThread;
+
 std::queue<Event> EventQueue::m_Queue;
 Platform* EventQueue::m_Platform;
 
@@ -173,23 +180,37 @@ bool EventQueue::Init(Platform* platform)
     m_Platform = platform;
 
     TrackFileWatcher(m_Platform->m_Watcher);
-    
-    std::thread watcher_thread{[&](){
-        while (true)
+
+    m_FileWatcherThread = std::make_unique<std::thread>([&](){
+        while (!m_QuitRequested)
         {
             std::this_thread::sleep_for(std::chrono::milliseconds(300));
-            m_Platform->m_Watcher.Poll();
+            {
+                std::lock_guard lk(m_WatcherLock);
+                m_ProcessingData = true;
+                m_Platform->m_Watcher.Poll();
+                m_ProcessingData = false;
+                m_ConditionVar.notify_one();
+            }
         }
-    }};
-
-    watcher_thread.detach();
+    });
 
     return true;
 }
 
 void EventQueue::Terminate()
 {
-    
+    // {
+    //     std::lock_guard lk(m_FileWatcherThread);
+    //     m_QuitRequested = true;
+    // }
+    // m_ConditionVar.notify_one();
+
+    // {
+    //     std::unique_lock lk(m_FileWatcherThread);
+    //     m_ConditionVar.wait(lk, []{ return !m_ProcessingData; });
+    //     m_FileWatcherThread->join();
+    // }
 }
 
 bool EventQueue::Poll(Event& event)
@@ -211,7 +232,6 @@ void EventQueue::Push(Event&& event)
 void EventQueue::Flush()
 {
     glfwPollEvents();
-    // m_Platform->m_Watcher.Poll();
 }
 
 void EventQueue::TrackWindow(Window& window)

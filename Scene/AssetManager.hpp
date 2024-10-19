@@ -63,7 +63,7 @@ private:
 
     // TEMP
     // TODO: make it configurable
-    const std::string m_CacheDirectory = "C:/Zarnitsa/Resources/Cache";
+    const std::string m_CacheDirectory = "C:/dev/Zarnitsa/Resources/Cache";
     Assimp::Importer m_Importer;
 };
 

@@ -19,6 +19,9 @@ public:
     void BindAttachments(uint32_t starting_slot);
     void ClearAttachment(uint32_t slot, int value);
     DeviceID GetAttachment(uint32_t slot);
+    DeviceID GetDepth();
+    
+    DeviceID GetID() const { return m_Framebuffer.ID; }
 
 // private:
     GraphicsContext* m_Context = nullptr;

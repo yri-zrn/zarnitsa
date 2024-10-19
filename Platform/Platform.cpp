@@ -14,10 +14,6 @@
 namespace zrn
 {
 
-static int s_CallbackCall = 0;
-
-
-
 bool Platform::Init()
 {
     if (!glfwInit())
@@ -27,7 +23,7 @@ bool Platform::Init()
 
     FileWatcherConfig config
     {
-        "C:/Zarnitsa/Resources",
+        "C:/dev/Zarnitsa/Resources",
         false,
         true
     };
