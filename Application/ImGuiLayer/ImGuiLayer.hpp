@@ -91,5 +91,6 @@ inline ImGuiLayer<T>::ImGuiLayer()
 
 namespace ImGui
 {
-    bool BeginPopupVoidTitle(const char* name, ImGuiPopupFlags popup_flags = 1);
+    bool BeginPopupTitleVoidContext(const char* name, ImGuiPopupFlags popup_flags = 1);
+    bool BeginPopupTitle(const char* name, ImGuiPopupFlags popup_flags = 1);
 } // namespace ImGui

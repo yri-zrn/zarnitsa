@@ -100,6 +100,11 @@ void Framebuffer::BindAttachments(uint32_t starting_slot)
     glBindTextureUnit(starting_slot + m_Framebuffer.ColorAttachmentsCount, m_Framebuffer.DepthAttachment);
 }
 
+void Framebuffer::BindDepth(uint32_t slot)
+{
+    glBindTextureUnit(slot, m_Framebuffer.DepthAttachment);
+}
+
 GLenum GetGLTextureFormat(TextureFormat format)
 {
     switch (format)
@@ -127,6 +132,11 @@ DeviceID Framebuffer::GetAttachment(uint32_t slot)
 }
 
 DeviceID Framebuffer::GetDepth()
+{
+    return m_Framebuffer.DepthAttachment;
+}
+
+DeviceID Framebuffer::GetStencil()
 {
     return m_Framebuffer.DepthAttachment;
 }

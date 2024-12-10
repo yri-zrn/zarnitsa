@@ -101,11 +101,10 @@ void _ImGuiTerminate()
 } // namespace zrn
 
 
-bool ImGui::BeginPopupVoidTitle(const char* name, ImGuiPopupFlags popup_flags)
+bool ImGui::BeginPopupTitleVoidContext(const char* name, ImGuiPopupFlags popup_flags)
 {
     ImGuiContext& g = *GImGui;
     ImGuiWindow* window = g.CurrentWindow;
-    
     
     int mouse_button = (popup_flags & ImGuiPopupFlags_MouseButtonMask_);
     
@@ -135,4 +134,17 @@ bool ImGui::BeginPopupVoidTitle(const char* name, ImGuiPopupFlags popup_flags)
     //     if (GetTopMostPopupModal() == NULL)
     //         OpenPopupEx(id, popup_flags);
     // return BeginPopupEx(id, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoSavedSettings);
+}
+
+bool ImGui::BeginPopupTitle(const char* str_id, ImGuiPopupFlags flags)
+{
+    ImGuiContext& g = *GImGui;
+    if (g.OpenPopupStack.Size <= g.BeginPopupStack.Size) // Early out for performance
+    {
+        g.NextWindowData.ClearFlags(); // We behave like Begin() and need to consume those values
+        return false;
+    }
+    flags |= ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings;
+    ImGuiID id = g.CurrentWindow->GetID(str_id);
+    return BeginPopupEx(id, flags);
 }

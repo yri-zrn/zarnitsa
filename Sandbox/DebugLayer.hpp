@@ -26,7 +26,7 @@ public:
 public:
     bool ShowDemoWindow = true;
     bool ShowAnotherWindow = false;
-    ImVec4 ClearColor = ImVec4(0.9f, 0.9f, 0.9f, 1.0f);
+    ImVec4 ClearColor = ImVec4(0.24f, 0.24f, 0.24f, 1.0f);
 
     void ShowFramerateOverlay(bool* show);
 

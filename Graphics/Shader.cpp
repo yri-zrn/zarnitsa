@@ -63,7 +63,7 @@ Status Shader::Create(GraphicsContext* context, const std::vector<uint32_t>& ver
 
 void Shader::Bind()
 {
-        ZRN_ON_DEBUG(
+    ZRN_ON_DEBUG(
         if (!m_Context)
         {
             ZRN_CORE_ERROR("{0}: Must create shader first", ZRN_FUNCTION_NAME);

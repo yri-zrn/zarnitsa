@@ -20,7 +20,7 @@ endif()
 add_executable(Zarin
     main.cpp
 
-    stb_image.h
+    # stb_image.h
     Application/Application.hpp
     Application/Application.cpp
     Application/Layer.hpp
@@ -94,6 +94,7 @@ target_link_libraries(Zarin
         assimp::assimp_static
         imgui::imgui
         spdlog::spdlog_static
+        stb::stb
 
         # TEMP
         spirv-cross-c-shared

@@ -14,6 +14,9 @@
 // #include <shaderc/glslc/src/file_includer.h>
 // #include <shaderc/libshaderc_util/include/libshaderc_util/file_finder.h>
 
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
+
 #include "Sandbox/SandboxLayer.hpp"
 
 namespace zrn
@@ -75,167 +78,66 @@ static std::string GetShaderTypeMacroDefinition(ShaderType type)
 
 bool AssetManager::Init(GraphicsContext* context)
 {
-    // TEMP
-    // if (!LoadShader(context, "C:/Zarnitsa/Resources/Shaders/Material.glsl"))
-    //     return false;
+    {
+        Texture debug_texture;
+        TextureSpecification spec;
+        spec.Width = 2;
+        spec.Height = 2;
+        spec.Format = TextureFormat::RGBA8;
+        uint32_t data[4] = {
+            0xFFFFFFFF, 0xFF000000, 0xFF000000, 0xFFFFFFFF
+        };
+        debug_texture.Create(context, spec, data);
+        m_Textures["Debug"] = debug_texture;
+    }
+
+    {
+        Shader debug_shader;
+        LoadShader(context, "C:/dev/Zarnitsa/Resources/Shaders/Debug.glsl");
+    }
     
+    {
+        Material debug_material;
+        // debug_material.Albedo = {0.9f, 0.04f, 0.9f};
+        debug_material.Create(context, GetShader("Debug"));
+        debug_material.Attach(*GetTexture("Debug"), TextureType::Albedo);
+        m_Materials["Debug"] = debug_material;
+    }
+
     return true;
 }
 
-Mesh AssetManager::LoadModel(const std::string& name, std::string file_path)
+void AssetManager::LoadResources(GraphicsContext* context)
 {
-
-#define ASSIMP_DONT_LOAD_MODEL
-#ifdef ASSIMP_DONT_LOAD_MODEL
-    const Vertex vertices[] =
+    for (auto const& dir_entry : std::filesystem::recursive_directory_iterator(GetResourceDirectory()))
     {
-        { {  0.3f,  0.5f,  0.0f }, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, { 0.0f, 0.0f } },  // Lower left
-        { {  0.5f, -0.3f,  0.0f }, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, { 0.0f, 1.0f } },  // Lower right
-        { { -0.3f, -0.5f,  0.0f }, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, { 1.0f, 1.0f } },  // Upper right
-        { { -0.5f,  0.3f,  0.0f }, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, { 1.0f, 0.0f } }   // Upper left
-    };
-
-    const uint32_t indices[] =
-    {
-        1, 0, 2,
-        2, 0, 3
-    };
-
-    std::vector<Vertex> vertex_data{ vertices, vertices + 4 };
-    std::vector<uint32_t> indices_data{ indices, indices + 6};
-
-#else
-    std::vector<Vertex> vertex_data;
-    std::vector<uint32_t> indices_data;
-
-    static Assimp::Importer importer;
-    auto import_flags = aiProcess_Triangulate | aiProcess_JoinIdenticalVertices | aiProcess_GenSmoothNormals | aiProcess_CalcTangentSpace;
-    const aiScene* scene = importer.ReadFile(file_path, import_flags);
-
-    if (scene == nullptr) {
-        return MeshComponent{};
-    }
-
-    std::vector<aiMesh*> meshes{ scene->mMeshes, scene->mMeshes + scene->mNumMeshes };
-
-    uint32_t mesh_id = 0;
-    for(auto mesh : meshes) {
-        std::vector<aiVector3D> vertices{ mesh->mVertices, mesh->mVertices + mesh->mNumVertices };
-
-        uint32_t vertex_id = 0;
-
-        for(const auto& vertex : vertices) {
-            const aiVector3D* normals = mesh->mNormals;
-            const aiVector3D* tangents = mesh->mTangents;
-            const aiVector3D* tex_coords = mesh->mTextureCoords[mesh_id];
-
-            vertex_data.insert(vertex_data.end(),
-            {
-                { vertex.x, vertex.y, vertex.z },
-                { normals[vertex_id].x, normals[vertex_id].y, normals[vertex_id].z },
-                { tangents[vertex_id].x, tangents[vertex_id].y, tangents[vertex_id].z },
-                { tex_coords[vertex_id].x, 1.0f - tex_coords[vertex_id].y },
-            });
-            ++vertex_id;
+        if (!dir_entry.is_directory())
+        {
+            TryLoadResource(context, dir_entry.path().string());
         }
-
-        std::vector<aiFace> faces{ mesh->mFaces, mesh->mFaces + mesh->mNumFaces };
-        for(const auto& face : faces) {
-            indices_data.insert(indices_data.end(), face.mIndices, face.mIndices + face.mNumIndices);
-        }
-
-        ++mesh_id;
     }
-#endif
-
-    return Mesh{  };
 }
 
-Mesh AssetManager::QuadMesh(GraphicsContext* context)
-{   
-    const Vertex vertices[] =
+void AssetManager::TryLoadResource(GraphicsContext* context, std::string file_path)
+{
+    auto filename = std::filesystem::path(file_path).stem().string();
+    auto extension = std::filesystem::path(file_path).extension().string();
+
+    if (extension == ".spv")
+        return;
+
+    if (extension == ".obj" || extension == ".glb" || extension == ".gltf")
     {
-        { {  0.5f,  0.5f,  0.0f }, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, { 0.0f, 0.0f } },  // Lower left
-        { {  0.5f, -0.5f,  0.0f }, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, { 0.0f, 1.0f } },  // Lower right
-        { { -0.5f, -0.5f,  0.0f }, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, { 1.0f, 1.0f } },  // Upper right
-        { { -0.5f,  0.5f,  0.0f }, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, { 1.0f, 0.0f } }   // Upper left
-    };
+        auto mesh = LoadMesh(context, file_path);
 
-    const uint32_t indices[] =
+    }
+    else if (extension == ".png" || extension == ".jpg")
     {
-        1, 0, 2,
-        2, 0, 3
-    };
-
-    std::vector<Vertex> vertex_data{ vertices, vertices + sizeof(vertices) };
-    std::vector<uint32_t> index_data{ indices, indices + sizeof(indices) };
-
-    Mesh result;
-    MeshSpecification spec;
-    spec.VertexData = (void*)vertex_data.data();
-    spec.VertexDataSize = vertex_data.size() * sizeof(Vertex);
-    spec.IndexData = index_data.data();
-    spec.IndexDataSize = index_data.size() * sizeof(uint32_t);
-    result.Create(context, spec);
-
-    return result;
+        auto texture = LoadTexture(context, file_path);
+    }
 }
 
-Mesh AssetManager::CubeMesh(GraphicsContext* context)
-{   
-    const Vertex vertices[] =
-    {
-        { {  1.0f,  1.0f, -1.0f }, {  0.0f,  0.0f,  0.0f }, {0.0f, 0.0f, 0.0f}, { 0.0f, 0.0f } },  // Lower left
-        { {  1.0f, -1.0f, -1.0f }, {  0.0f,  0.0f,  0.0f }, {0.0f, 0.0f, 0.0f}, { 0.0f, 1.0f } },  // Lower right
-        { {  1.0f,  1.0f,  1.0f }, {  0.0f,  0.0f,  0.0f }, {0.0f, 0.0f, 0.0f}, { 1.0f, 1.0f } },  // Upper right
-        { {  1.0f, -1.0f,  1.0f }, {  0.0f,  0.0f,  0.0f }, {0.0f, 0.0f, 0.0f}, { 1.0f, 0.0f } },  // Upper left
-
-        { { -1.0f,  1.0f, -1.0f }, {  0.0f,  0.0f,  0.0f }, {0.0f, 0.0f, 0.0f}, { 1.0f, 0.0f } },  // Lower left
-        { {  1.0f, -1.0f, -1.0f }, {  0.0f,  0.0f,  0.0f }, {0.0f, 0.0f, 0.0f}, { 1.0f, 1.0f } },  // Lower right
-        { { -1.0f,  1.0f,  1.0f }, {  0.0f,  0.0f,  0.0f }, {0.0f, 0.0f, 0.0f}, { 0.0f, 1.0f } },  // Upper right
-        { { -1.0f, -1.0f,  1.0f }, {  0.0f,  0.0f,  0.0f }, {0.0f, 0.0f, 0.0f}, { 0.0f, 0.0f } }   // Upper left
-    };
-
-    const uint32_t indices[] =
-    {
-        5, 3, 1,
-        3, 8, 4,
-
-        7, 6, 8,
-        2, 8, 6,
-        
-        1, 4, 2,
-        5, 2, 6,
-        
-        5, 7, 3,
-        3, 7, 8,
-        
-        7, 5, 6,
-        2, 4, 8,
-        
-        1, 3, 4,
-        5, 1, 2
-    };
-
-    std::vector<Vertex> vertex_data{ vertices, vertices + sizeof(vertices) };
-    std::vector<uint32_t> index_data{ indices, indices + sizeof(indices) };
-
-    Mesh result;
-    MeshSpecification spec;
-    spec.VertexData = (void*)vertex_data.data();
-    spec.VertexDataSize = vertex_data.size() * sizeof(Vertex);
-    spec.IndexData = index_data.data();
-    spec.IndexDataSize = index_data.size() * sizeof(uint32_t);
-    
-    VertexLayout vertex_buffer_layout = { { ShaderDataType::Float3, ShaderDataType::Float3, ShaderDataType::Float3, ShaderDataType::Float2 }, 4 };
-    
-    spec.VertexBufferLayout = vertex_buffer_layout;
-    result.Create(context, spec);
-
-    return result;
-}
-
-std::optional<Mesh> AssetManager::LoadMesh(GraphicsContext* context, const std::string& path)
+Mesh* AssetManager::LoadMesh(GraphicsContext* context, const std::string& path)
 {
     Mesh result;
 
@@ -248,9 +150,8 @@ std::optional<Mesh> AssetManager::LoadMesh(GraphicsContext* context, const std::
 
     if (scene == nullptr)
     {
-        // TEMP: consider API
         ZRN_CORE_WARN("Failed to load file: {0}", path);
-        return {};
+        nullptr;
         
     }
 
@@ -296,18 +197,18 @@ std::optional<Mesh> AssetManager::LoadMesh(GraphicsContext* context, const std::
     result.Create(context, specifination);
     auto name = std::filesystem::path(path).stem().string();
     m_Meshes[name] = result;
-    return m_Meshes[name];
+    return &m_Meshes[name];
 }
 
-std::optional<Mesh> AssetManager::GetMesh(const std::string& name)
+Mesh* AssetManager::GetMesh(const std::string& name)
 {
     if (m_Meshes.find(name) == m_Meshes.end())
     {
         // TEMP
         std::cout << "Failed to get mesh: " << name << '\n';
-        return {};
+        return nullptr;
     }
-    return m_Meshes.at(name);
+    return &m_Meshes.at(name);
 }
 
 Shader* AssetManager::LoadShader(GraphicsContext* context, const std::string& path)
@@ -361,6 +262,65 @@ Shader* AssetManager::GetShader(const std::string& name)
     return &m_Shaders.at(name);
 }
 
+Texture* AssetManager::LoadTexture(GraphicsContext* context, const std::string& path)
+{
+    Texture texture;
+    int width, height, channels;
+    stbi_uc* image = stbi_load(path.c_str(), &width, &height, &channels, 0);
+    if(!image)
+    {
+        ZRN_CORE_ERROR("Failed to load texture {0}", path);
+        return nullptr;
+    }
+
+    TextureSpecification texture_config;
+    texture_config.Width = width;
+    texture_config.Height = height;
+    if (channels == 4)
+    {
+        texture_config.Format = TextureFormat::RGBA8;
+    }
+    else if (channels == 3)
+    {
+        texture_config.Format = TextureFormat::RGB8;
+    }
+    else if (channels == 1)
+    {
+        texture_config.Format = TextureFormat::Red;
+    }
+    texture.Create(context, texture_config, image);
+    
+    stbi_image_free(image);
+    auto name = std::filesystem::path(path).stem().string();
+    m_Textures[name] = texture;
+    return &m_Textures[name];
+}
+
+Texture* AssetManager::GetTexture(const std::string& name)
+{
+    if (m_Textures.find(name) == m_Textures.end())
+    {
+        ZRN_CORE_ERROR("Failed to get texture {0} ", name);
+        return {};
+    }
+    return &m_Textures.at(name);
+}
+
+void AssetManager::AddMaterial(Material& material, const std::string& name)
+{
+    m_Materials[name] = material;
+}
+
+Material* AssetManager::GetMaterial(const std::string& name)
+{
+    if (m_Materials.find(name) == m_Materials.end())
+    {
+        ZRN_CORE_ERROR("Failed to get texture {0} ", name);
+        nullptr;
+    }
+    return &m_Materials.at(name);
+}
+
 void AssetManager::_CreateCacheDirectory()
 {
     if (!std::filesystem::exists(m_CacheDirectory))
@@ -370,19 +330,29 @@ void AssetManager::_CreateCacheDirectory()
 std::string AssetManager::_ReadShaderSource(const std::string& path)
 {
     std::string result;
-    std::ifstream in(path, std::ios::in);
+    std::ifstream in(path, std::ios::in | std::ios::binary);
 
     assert(in);
 
     in.seekg(0, std::ios::end);
     auto size = in.tellg();
+    in.seekg(0, std::ios::beg);
 
     assert(size != -1);
 
-    result.resize(in.tellg());
-    in.seekg(0, std::ios::beg);
-    in.read(result.data(), result.size());
+    result.resize((uint32_t)size + 1);
+    in.read(result.data(), size);
     in.close();
+    result.back() = '\0';
+
+    if (!in)
+    {
+        ZRN_CORE_ERROR("Failed to read {0} characters", (int)(in.gcount() - size));
+    }
+
+    ZRN_CORE_TRACE("Input file size: {0}", (int)size);
+    ZRN_CORE_TRACE("Source size: {0}", result.size());
+    
     return result;
 }
 
@@ -507,14 +477,20 @@ bool AssetManager::_CompileOpenGLBinaries(const std::vector<uint32_t>& vulkan_bi
 bool AssetManager::_ReloadShader(const std::string& source_path, ShaderType type, std::vector<uint32_t>& out_opengl_binary)
 {
     std::string source   = _ReadShaderSource(source_path);
+    ZRN_CORE_TRACE("Vulkan GLSL source:\n {0}", source);
 
     std::vector<uint32_t> vulkan_binaries;
     if (!_CompileVulkanBinaries(source, type, source_path, vulkan_binaries))
+    {
+        // ZRN_CORE_TRACE("Vulkan GLSL source:\n {0}", source);
         return false;
+    }
 
     std::vector<uint32_t> opengl_binaries;
     if (!_CompileOpenGLBinaries(vulkan_binaries, type, source_path, opengl_binaries))
+    {
         return false;
+    }
     
     _CacheShader(source_path, type, GraphicsAPI::Vulkan, vulkan_binaries);
     _CacheShader(source_path, type, GraphicsAPI::OpenGL, opengl_binaries);

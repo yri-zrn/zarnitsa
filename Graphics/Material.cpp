@@ -33,7 +33,7 @@ Status Material::Create(GraphicsContext* context, Shader* shader)
     return ErrorType::NoError;
 }
 
-void Material::Set(Texture& texture, TextureType type)
+void Material::Attach(Texture& texture, TextureType type)
 {
     ZRN_ON_DEBUG(
         if (!m_Context)
@@ -50,6 +50,24 @@ void Material::Set(Texture& texture, TextureType type)
 
     m_TextureAttached[(size_t)type] = true;
     m_Textures[(size_t)type] = texture;
+}
+
+void Material::Detach(TextureType type)
+{
+    ZRN_ON_DEBUG(
+        if (!m_Context)
+        {
+            ZRN_CORE_ERROR("{0}: Must create material first", ZRN_FUNCTION_NAME);
+            return;
+        }
+        if (type == TextureType::None)
+        {
+            ZRN_CORE_ERROR("{0}: Wrong texture type", ZRN_FUNCTION_NAME);
+            return;
+        }
+    )
+    
+    m_TextureAttached[(size_t)type] = false;
 }
 
 void Material::Bind(uint32_t textures_starting_slot)

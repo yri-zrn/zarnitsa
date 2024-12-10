@@ -6,13 +6,15 @@
 
 //! TEMP: world must not know about graphics
 #include "GraphicsDevice.hpp"
+#include "AssetManager.hpp"
 
 namespace zrn
 {
 
-void World::Init(GraphicsContext* context)
+void World::Init(GraphicsContext* context, AssetManager* manager)
 {
     Context = context;
+    m_Manager = manager;
 }
 
 void World::OnBegin()
@@ -50,11 +52,28 @@ flecs::entity World::CreateEntity(const std::string& name)
                 .add<RootTag>()
                 .add<LeafTag>()
                 .add<MeshComponent>()
+                .add<MaterialComponent>()
+                .set<MaterialComponent>({m_Manager->GetMaterial("Debug")})
                 .set<NameComponent>({ name });
                 // .add<MaterialComponent>();
 }
 
-flecs::entity World::CreateEntity(const std::string& name, Mesh&& mesh)
+flecs::entity World::CreateEntity(const std::string& name, Mesh& mesh)
+{
+    return
+        Registry.entity()
+                .add<TransformComponent, GlobalTag>()
+                .add<TransformComponent, LocalTag>()
+                .add<RootTag>()
+                .add<LeafTag>()
+                .add<MeshComponent>()
+                .add<MaterialComponent>()
+                .set<MaterialComponent>({m_Manager->GetMaterial("Debug")})
+                .set<MeshComponent>({ &mesh })
+                .set<NameComponent>({ name });
+}
+
+flecs::entity World::CreatePointLight(const std::string& name)
 {
     return 
         Registry.entity()
@@ -62,10 +81,8 @@ flecs::entity World::CreateEntity(const std::string& name, Mesh&& mesh)
                 .add<TransformComponent, LocalTag>()
                 .add<RootTag>()
                 .add<LeafTag>()
-                .add<MeshComponent>()
-                .set<MeshComponent>({ std::move(mesh) })
+                .add<PointLightComponent>()
                 .set<NameComponent>({ name });
-                // .add<MaterialComponent>();
 }
 
 void World::SetTranslation(flecs::entity entity, glm::vec3 translation)

@@ -5,14 +5,6 @@
 
 #include <windows.h>
 
-#ifdef ZRN_DEBUG
-    #define ZRN_ON_DEBUG(x) x
-    #define ZRN_UNUSED(var) ((void)var);
-#else
-    #define ZRN_ON_DEBUG(x)
-    #define ZRN_UNUSED(var)
-#endif
-
 /*
 
 ? Known issues:
@@ -46,6 +38,7 @@
     - Make Uniform and Vertex buffers template?
     - Add texture and vertex purpose fields
     - Add ability for vertex to have different layouts (like only pos layoyt, layout for G-Buffer, layout for lighting calculations)
+    - Add readable and unreadable textures (OpenGL textures and renderbuffers)
 
 ? In progress:
 

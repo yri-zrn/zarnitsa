@@ -13,4 +13,4 @@ CMakeUserPresets.json
 build
 .vscode
 .VSCodeCounter
-Resources/Cache
+Resources

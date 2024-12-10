@@ -16,6 +16,7 @@ namespace zrn
 {
 
 class GraphicsContext;
+class AssetManager;
 
 class World
 {
@@ -28,7 +29,7 @@ public:
 
 public:
     //! TEMP:
-    void Init(GraphicsContext* context);
+    void Init(GraphicsContext* context, AssetManager* manager);
 
     void OnBegin();
     void OnUpdate(Timestep timestep);
@@ -37,12 +38,15 @@ public:
     
 public:
     flecs::entity CreateEntity(const std::string& name);
-    flecs::entity CreateEntity(const std::string& name, Mesh&& mesh);
+    flecs::entity CreateEntity(const std::string& name, Mesh& mesh);
+    flecs::entity CreatePointLight(const std::string& name);
+
     void AddChild(flecs::entity parent, flecs::entity child);
     void SetTranslation(flecs::entity entity, glm::vec3 position);
     void SelectEntity(flecs::entity entity) { SelectedEntity = entity; }
 
 private:
+    AssetManager* m_Manager;
     void UpdateTransforms();
 };
 

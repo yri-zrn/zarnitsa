@@ -39,7 +39,6 @@ public:
 
     void Attach(const std::string& layer_name, Layer& layer);
 
-
     Layer& GetLayer(const std::string& layer_name);
 
 public:

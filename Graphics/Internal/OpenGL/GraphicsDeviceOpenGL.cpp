@@ -748,6 +748,33 @@ void GraphicsDeviceOpenGL::BindFramebuffer(Framebuffer* framebuffer, uint32_t sl
         glBindFramebuffer(GL_FRAMEBUFFER, framebuffer->ID);
         glViewport(0, 0, framebuffer->Width, framebuffer->Height);
 
+        // if (framebuffer->ColorAttachmentsCount > 1)
+        // {
+        //     GLenum buffers[16] = {
+        //         GL_COLOR_ATTACHMENT0,
+        //         GL_COLOR_ATTACHMENT1,
+        //         GL_COLOR_ATTACHMENT2,
+        //         GL_COLOR_ATTACHMENT3,
+        //         GL_COLOR_ATTACHMENT4,
+        //         GL_COLOR_ATTACHMENT5,
+        //         GL_COLOR_ATTACHMENT6,
+        //         GL_COLOR_ATTACHMENT7,
+        //         GL_COLOR_ATTACHMENT8,
+        //         GL_COLOR_ATTACHMENT9,
+        //         GL_COLOR_ATTACHMENT10,
+        //         GL_COLOR_ATTACHMENT11,
+        //         GL_COLOR_ATTACHMENT12,
+        //         GL_COLOR_ATTACHMENT13,
+        //         GL_COLOR_ATTACHMENT14,
+        //         GL_COLOR_ATTACHMENT15
+        //     };
+        //     glDrawBuffers(framebuffer->ColorAttachmentsCount, buffers);
+        // }
+        // else if (framebuffer->ColorAttachmentsCount == 0)
+        // {
+        //     glDrawBuffer(GL_NONE);
+        // }
+
         for (size_t slot = 0; slot < framebuffer->ColorAttachmentsCount; ++slot)
             glBindTextureUnit(slot, framebuffer->ColorAttachments[slot]);
         glBindTextureUnit(slot + framebuffer->ColorAttachmentsCount, framebuffer->DepthAttachment);
@@ -759,6 +786,7 @@ void GraphicsDeviceOpenGL::BindFramebuffer(Framebuffer* framebuffer, uint32_t sl
         //     glBindTextureUnit(slot, 0);
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        
     }
 }
 
@@ -908,6 +936,8 @@ GLenum GraphicsDeviceOpenGL::_GetOpenGLTextureFormat(TextureFormat format)
         case TextureFormat::RGB8:       return GL_RGB;
         case TextureFormat::RGBA8:      return GL_RGBA;
         case TextureFormat::RGB16F:     return GL_RGB;
+        case TextureFormat::RGBA16F:    return GL_RGBA;
+        case TextureFormat::Red:        return GL_RED;
         case TextureFormat::RedInteger: return GL_RED_INTEGER;
         default: break;
     }
@@ -923,6 +953,8 @@ GLenum GraphicsDeviceOpenGL::_GetOpenGLInternalTextureFormat(TextureFormat forma
         case TextureFormat::RGB8:       return GL_RGB8;
         case TextureFormat::RGBA8:      return GL_RGBA8;
         case TextureFormat::RGB16F:     return GL_RGB16F;
+        case TextureFormat::RGBA16F:    return GL_RGBA16F;
+        case TextureFormat::Red:        return GL_R32F;
         case TextureFormat::RedInteger: return GL_R32I;
         default: break;
     }
@@ -938,6 +970,8 @@ GLenum GraphicsDeviceOpenGL::_GetOpenGLDataType(TextureFormat format)
         case TextureFormat::RGB8:       return GL_UNSIGNED_BYTE;
         case TextureFormat::RGBA8:      return GL_UNSIGNED_BYTE;
         case TextureFormat::RGB16F:     return GL_FLOAT;
+        case TextureFormat::RGBA16F:    return GL_FLOAT;
+        case TextureFormat::Red:        return GL_FLOAT;
         case TextureFormat::RedInteger: return GL_UNSIGNED_BYTE;
         default: break;
     }

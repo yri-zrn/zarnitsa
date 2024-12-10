@@ -32,13 +32,14 @@ public:
     Material() = default;
 
     // TEMP: color value is random
-    glm::vec3 Albedo             = { 0.8f, 0.2f, 0.7f };
-    glm::vec2 RoughnessMetallic  = { 0.0f, 0.0f };
-    glm::vec3 Emission           = { 0.0f, 0.0f, 0.0f };
+    glm::vec3 Albedo                     = { 0.8f, 0.2f, 0.7f };
+    glm::vec3 RoughnessMetallicSpecular  = { 0.0f, 0.0f, 0.0f };
+    glm::vec3 Emission                   = { 0.0f, 0.0f, 0.0f };
     uint32_t StartingSlot = 0;
     
     Status Create(GraphicsContext* context, Shader* shader);
-    void Set(Texture& texture, TextureType type);
+    void Attach(Texture& texture, TextureType type);
+    void Detach(TextureType type);
 
     void Bind(uint32_t textures_starting_slot);
     int GetTextureAttachmentMask();

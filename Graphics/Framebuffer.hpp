@@ -17,9 +17,11 @@ public:
     void Resize(uint32_t width, uint32_t height);
     
     void BindAttachments(uint32_t starting_slot);
+    void BindDepth(uint32_t slot);
     void ClearAttachment(uint32_t slot, int value);
     DeviceID GetAttachment(uint32_t slot);
     DeviceID GetDepth();
+    DeviceID GetStencil();
     
     DeviceID GetID() const { return m_Framebuffer.ID; }
 

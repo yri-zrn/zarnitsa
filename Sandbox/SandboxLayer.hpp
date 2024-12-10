@@ -59,19 +59,19 @@ public:
     GraphicsDevice  Device;
     Renderer        Renderer;
     
-    Shader*      BoxShader                  = nullptr;
-    Shader*      GridShader                 = nullptr;
-    Shader*      ScreenShader               = nullptr;
-    Shader*      SolidColorShader           = nullptr;
-    Shader*      OutlineShader              = nullptr;
-    Shader*      DepthShader                = nullptr;
+    Shader*   BoxShader          = nullptr;
+    Shader*   GridShader         = nullptr;
+    Shader*   ScreenShader       = nullptr;
+    Shader*   SolidColorShader   = nullptr;
+    Shader*   OutlineShader      = nullptr;
+    Shader*   DepthShader        = nullptr;
+    Shader*   EmptyShader        = nullptr;
+    Shader*   UVScreenShader     = nullptr;
 
-    Framebuffer  FramebufferOutline;
+    Framebuffer  SelectedObjectFramebuffer;
     Framebuffer  Depth;
 
-    Texture      TextureAlbedo       = {};
-    Texture      TextureRoughness    = {};
-    Material     Material            = {};
+    Material     Material          = {};
 
     glm::vec4*   ClearColor = nullptr;
 

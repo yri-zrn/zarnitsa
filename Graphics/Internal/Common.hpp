@@ -57,6 +57,8 @@ enum class TextureFormat
     RGB8,
     RGBA8,
     RGB16F,
+    RGBA16F,
+    Red,
     RedInteger,
     Depth24Stencil8
 };

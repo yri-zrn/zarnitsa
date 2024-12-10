@@ -1,19 +1,11 @@
 #version 450 core
 
-// layout(push_constant) uniform constants
-// {
-// 	vec4 data;
-// 	mat4 render_matrix;
-// } PushConstants;
+layout(push_constant) uniform ConstantBuffer
+{
+    vec4 CutOutColor;
+} PushConstants;
 
 #if defined(VERTEX_SHADER)
-
-layout(binding = 1) uniform SceneData
-{
-    mat4 ViewProjection;
-    vec3 CameraPosition;
-    float _padding;
-} scene_data;
 
 layout (location = 0) out vec2 UV;
 
@@ -26,59 +18,103 @@ void main()
 
 #elif defined(FRAGMENT_SHADER)
 
-layout(binding = 0) uniform sampler2D screen;
-
+layout(binding = 1) uniform sampler2D image;
 layout(location = 0) in vec2 UV;
+layout(location = 0) out vec4 fragment;
 
-layout(location = 1) out vec4 fragment;
-
-// float inside(vec2 pos)
-// {
-//     // ivec2 size = textureSize(screen, 0).xy;
-//     return step(0.1, length(texture(screen, pos).rgb));
-// }
-
-// bool inside(texture2d tex, vec2 pos)
-// {
-//   vec3 greenscreen = vec3(0.0);
-//   vec3 col = texture(tex, pos).rgb;
-//   return length(col - greenscreen) > 0.1;
-// }
-
-// #define inside(P) step(.1,length(  texture(screen, (P)/textureSize(screen, 0).xy)  \
-//                                  - vec4(.05, .64, .15, 1) ) )
-
-bool inside(vec2 pos)
+float Circle(float radius, vec2 position)
 {
-    vec3 greenscreen = vec3(0.0, 0.0, 0.0);
-    vec3 col = texture(screen, pos).rgb;
-    return length(col - greenscreen) > 0.1;
+    return step(radius, distance(position, vec2(0.5)));
 }
 
 void main()
 {
-    // vec2 uv = fragCoord;
+    // vec2 offset = vec2(1.0/1920.0, 1.0/1080.0);
+    // vec4 col = texture2D(image, UV);
+	// if (col.r == 1.0)
+    // {
+	// 	float a = texture2D(image, vec2(UV.x + offset.x, UV.y           )).r +
+	// 		      texture2D(image, vec2(UV.x,            UV.y - offset.y)).r +
+	// 		      texture2D(image, vec2(UV.x - offset.x, UV.y           )).r +
+	// 		      texture2D(image, vec2(UV.x,            UV.y + offset.y)).r;
+	// 	if (col.a < 1.0 && a > 0.0)
+	// 		gl_FragColor = vec4(0.0, 0.0, 0.0, 0.8);
+	// 	else
+	// 		gl_FragColor = col;
+	// }
 
-    vec2 right = vec2(1.0, 0.0);
-    vec2 down = vec2(0.0);
+#ifdef OLD
+    float outline_thickness = 0.2;
+    vec3 outline_color = vec3(1.0, 0.9, 0.1);
+    float outline_threshold = 0.5;
+
+    vec4 color = texture(image, UV);
     
-    vec2 fragCoord = gl_FragCoord.xy;
-    vec2 texture_size = textureSize(screen, 0).xy;
-    vec4 x = vec4(0.0);
-    if (!inside(UV))
+    fragment = vec4(0.0);
+    if (color.r >= 1.0)
     {
-        if (inside((fragCoord + right) / texture_size) ||
-            inside((fragCoord + down)  / texture_size) ||
-            inside((fragCoord - right) / texture_size) ||
-            inside((fragCoord - down)  / texture_size))
+        ivec2 size = textureSize(image, 0);
+
+        // float uv_x = UV.x * size.x;
+        // float uv_y = UV.y * size.y;
+        float uv_x = gl_FragCoord.x/size.x;
+        float uv_y = gl_FragCoord.y/size.y;
+
+        // vec2 tex_coord = gl_FragCoord.xy/size;
+
+        float sum = 0.0;
+        for (int n = 0; n < 9; ++n)
         {
-            // x = vec4(0.3, 0.5, 0.9, 1.0);
-            x = vec4(1.0);
+            uv_y = (UV.y * size.y) + (outline_thickness * float(n - 4.5));
+            float h_sum = 0.0;
+            h_sum += texelFetch(image, ivec2(uv_x - (4.0 * outline_thickness), uv_y), 0).a;
+            h_sum += texelFetch(image, ivec2(uv_x - (3.0 * outline_thickness), uv_y), 0).a;
+            h_sum += texelFetch(image, ivec2(uv_x - (2.0 * outline_thickness), uv_y), 0).a;
+            h_sum += texelFetch(image, ivec2(uv_x - outline_thickness, uv_y), 0).a;
+            h_sum += texelFetch(image, ivec2(uv_x, uv_y), 0).a;
+            h_sum += texelFetch(image, ivec2(uv_x + outline_thickness, uv_y), 0).a;
+            h_sum += texelFetch(image, ivec2(uv_x + (2.0 * outline_thickness), uv_y), 0).a;
+            h_sum += texelFetch(image, ivec2(uv_x + (3.0 * outline_thickness), uv_y), 0).a;
+            h_sum += texelFetch(image, ivec2(uv_x + (4.0 * outline_thickness), uv_y), 0).a;
+            sum += h_sum / 9.0;
+        }
+
+        if (sum / 9.0 >= 0.0001) {
+            fragment = vec4(outline_color, 1);
         }
     }
+#endif
 
-    fragment = x;
-    // fragment = texture(screen, UV);
+// #ifdef OLD_2
+    // ivec2 size = textureSize(image, 0);
+    // ivec2 size = ivec2(1920, 1080);
+    // vec2 pixel_coord = UV * size;
+    // vec2 pixel_coord = gl_FragCoord.xy/size;
+    // float border_width = 0.005;
+    float circle_width = 0.02;
+
+    vec4 color = texture(image, UV);
+
+    fragment = vec4(0.0);
+
+    vec2 offset = vec2(1.0/1920.0, 1.0/1080.0);
+
+    if (color.r < 1.0)
+    {
+        fragment = vec4(0.2, 0.9, 0.5, 1.0);
+    }
+    else
+    {
+        if (Circle(circle_width, vec2(0.1 + UV.x - offset.x, UV.y           )) == 0.0
+         || Circle(circle_width, vec2(0.1 + UV.x + offset.x, UV.y           )) == 0.0
+         || Circle(circle_width, vec2(0.1 + UV.x           , UV.y + offset.y)) == 0.0
+         || Circle(circle_width, vec2(0.1 + UV.x           , UV.y - offset.y)) == 0.0)
+        {
+            fragment = vec4(0.3, 0.5, 0.9, 1.0);
+        }
+    }
+    // fragment = vec4(UV, 0.0, 1.0);
+// #endif
 }
 
 #endif

@@ -64,17 +64,22 @@ struct TransformComponent
 
 struct MeshComponent
 {
-    Mesh Mesh;
+    MeshComponent() = default;
+    MeshComponent(const MeshComponent& other) = default;
+    Mesh* Mesh;
 };
 
 struct MaterialComponent
 {
-    Material Material;
+    MaterialComponent() = default;
+    MaterialComponent(const MaterialComponent& other) = default;
+    Material* Material;
 };
 
-// struct ObjectComponent
-// {
-
-// };
+struct PointLightComponent
+{
+    glm::vec3 Color       { 0.0f, 0.0f, 0.0f };
+    float     RadiantFlux { 10.0f };
+};
 
 } // namespace zrn

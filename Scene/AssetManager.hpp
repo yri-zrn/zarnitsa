@@ -7,11 +7,12 @@
 #include <assimp/postprocess.h>     // Post processing flags
 #include <string>
 #include <vector>
-#include <unordered_map>
+#include <map>
 #include <optional>
 
 #include "Mesh.hpp"
 #include "Shader.hpp"
+#include "Texture.hpp"
 
 namespace zrn
 {
@@ -27,19 +28,33 @@ class AssetManager
 public:
     bool Init(GraphicsContext* context);
 
-    // TEMP
-    Mesh LoadModel(const std::string& name, std::string file_path);
-    Mesh QuadMesh(GraphicsContext* context);
-    Mesh CubeMesh(GraphicsContext* context);
+    void LoadResources(GraphicsContext* context);
+    void TryLoadResource(GraphicsContext* context, std::string file_path);
     
-    // TEMP: TODO: make it return bool on success
-    std::optional<Mesh> LoadMesh(GraphicsContext* context, const std::string& path);
-    std::optional<Mesh> GetMesh(const std::string& name);
+    Mesh* LoadMesh(GraphicsContext* context, const std::string& path);
+    Mesh* GetMesh(const std::string& name);
 
     Shader* LoadShader(GraphicsContext* context, const std::string& path);
     Shader* GetShader(const std::string& name);
 
+    Texture* LoadTexture(GraphicsContext* context, const std::string& path);
+    Texture* GetTexture(const std::string& name);
+
+    void AddMaterial(Material& material, const std::string& name);
+    Material* GetMaterial(const std::string& name);
+
     std::string GetCacheDirectory() { return m_CacheDirectory; }
+
+    std::string GetResourceDirectory() { return m_ResourceDirectory; }
+
+    const auto& GetMaterialLibrary() const { return m_Materials; }
+    auto& GetMaterialLibrary() { return m_Materials; }
+
+    const auto& GetTextureLibrary() const { return m_Textures; }
+    auto& GetTextureLibrary() { return m_Textures; }
+
+    const auto& GetMeshLibrary() const { return m_Meshes; }
+    auto& GetMeshLibrary() { return m_Meshes; }
 
 private:
     void _CreateCacheDirectory();
@@ -58,12 +73,15 @@ private:
     void _Reflect(ShaderType type, const std::vector<uint32_t>& binary);
 
 private:
-    std::unordered_map<std::string, Shader> m_Shaders;
-    std::unordered_map<std::string, Mesh>   m_Meshes;
+    std::map<std::string, Shader>    m_Shaders;
+    std::map<std::string, Mesh>      m_Meshes;
+    std::map<std::string, Texture>   m_Textures;
+    std::map<std::string, Material>  m_Materials;
 
     // TEMP
     // TODO: make it configurable
     const std::string m_CacheDirectory = "C:/dev/Zarnitsa/Resources/Cache";
+    const std::string m_ResourceDirectory = "C:/dev/Zarnitsa/Resources";
     Assimp::Importer m_Importer;
 };
 

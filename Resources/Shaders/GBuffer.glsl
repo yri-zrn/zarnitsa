@@ -3,8 +3,10 @@
 layout(binding = 1) uniform SceneData
 {
     mat4 ViewProjection;
-    vec3 CameraPosition;
-    float _padding;
+    vec4 CameraPosition;
+    // float _padding1;
+    vec4 CameraOrigin;
+    // float _padding2;
 } scene_data;
 
 layout(binding = 2) uniform ModelData
@@ -12,13 +14,18 @@ layout(binding = 2) uniform ModelData
     mat4 Transform;
 } model_data;
 
+// ! TODO: FIXME: SOMETHING GOES WRONG HERE, TEXTURE MASK IS INCORRECT 
 layout(binding = 3) uniform MaterialData
 {
     vec4  Albedo;
-    vec2  RoughnessMetallic;
-    vec3  Emission;
-    float _padding;
+    vec4  RoughnessMetallicSpecular;
+    // float _padding1;
+    vec4  Emission;
+    // float _padding2;
     int   TextureMask;
+    int   _pad1;
+    int   _pad2;
+    int   _pad3;
 } material_data;
 
 #if defined(VERTEX_SHADER)
@@ -35,13 +42,14 @@ layout(location = 3) out vec2 tex_coords;
 
 void main()
 {
-    vec4 pos = model_data.Transform * vec4(vPosition, 1.0);
-    gl_Position = scene_data.ViewProjection * pos;
+    vec4 world_space_vertex_position4 = model_data.Transform * vec4(vPosition, 1.0);
 
-    position    = pos.rgb;
-    normal      = mat3(transpose(inverse(model_data.Transform))) * vNormal;
+    position    = vec3(world_space_vertex_position4) / world_space_vertex_position4.w;
+    normal      = vec3(transpose(inverse(model_data.Transform)) * vec4(vNormal, 0.0));
     tangent     = vTangent;
     tex_coords  = vTexCoords;
+
+    gl_Position = scene_data.ViewProjection * world_space_vertex_position4;
 }
 
 #elif defined(FRAGMENT_SHADER)
@@ -53,18 +61,45 @@ layout(location = 3) in vec2 tex_coords;
 
 layout(location = 0) out vec4 Position;
 layout(location = 1) out vec4 Albedo;
-layout(location = 2) out vec4 RoughnessMetallic;
+layout(location = 2) out vec4 RoughnessMetallicSpecular;
 layout(location = 3) out vec4 Normal;
 layout(location = 4) out vec4 Emission;
 
-layout(binding = 4) uniform sampler2D Textures[4];
+layout(binding = 4) uniform sampler2D u_Albedo;
+layout(binding = 5) uniform sampler2D u_RoughnessMetallicSpecular;
+layout(binding = 6) uniform sampler2D u_Normal;
+layout(binding = 7) uniform sampler2D u_Emission;
 
-uint AlbedoIndex            = 0;
-uint RoughnessMetallicIndex = 1;
-uint NormalIndex            = 2;
-uint EmissionIndex          = 3;
+const uint AlbedoIndex                    = 0;
+const uint RoughnessMetallicSpecularIndex = 1;
+const uint NormalIndex                    = 2;
+const uint EmissionIndex                  = 3;
 
-// StartingSlot         = 3
+mat3 CotangentFrame(in vec3 normal, in vec3 p, in vec2 UV)
+{
+    vec3 dp1 = dFdx(p);
+    vec3 dp2 = dFdy(p);
+    vec2 duv1 = dFdx(UV);
+    vec2 duv2 = dFdy(UV);
+
+    vec3 dp2_perp = cross(dp2, normal);
+    vec3 dp1_perp = cross(normal, dp1);
+    vec3 T = dp2_perp * duv1.x + dp1_perp * duv2.x;
+    vec3 B = dp2_perp * duv1.y + dp1_perp * duv2.y;
+
+    float invmax = inversesqrt(max(dot(T, T), dot(B, B)));
+    return mat3(T * invmax, B * invmax, normal);
+}
+
+vec3 ApplyNormalMap(in vec3 normal, in vec3 view_direction, in vec2 UV)
+{
+    vec3 high_res_normal = texture(u_Normal, UV).xyz;
+    high_res_normal = normalize(high_res_normal * 2.0 - 1.0);
+    mat3 TBN = CotangentFrame(normal, -view_direction, UV);
+    return normalize(TBN * high_res_normal);
+}
+
+// StartingSlot         = 4
 // Albedo               =  0 + StartingSlot
 // RoughnessMetallic    =  1 + StartingSlot
 // Normal               =  2 + StartingSlot
@@ -86,22 +121,30 @@ void main()
 {
     Position = vec4(position, 0.0);
 
-    float value_intensity = 0.0 - material_bit(AlbedoIndex);
-    Albedo = mix(texture(Textures[AlbedoIndex], tex_coords),
-                 material_data.Albedo,
-                 value_intensity);
+    float texture_intensity = material_bit(AlbedoIndex);
+    Albedo = mix(material_data.Albedo,
+                 texture(u_Albedo, tex_coords),
+                 texture_intensity);
+
+    float alpha = Albedo.w;
     
-    value_intensity = 0.0 - material_bit(RoughnessMetallicIndex);
-    RoughnessMetallic = mix(texture(Textures[RoughnessMetallicIndex], tex_coords),
-                            vec4(material_data.RoughnessMetallic, 0.0, 0.0),
-                            value_intensity);
+    texture_intensity = material_bit(RoughnessMetallicSpecularIndex);
+
+    RoughnessMetallicSpecular = mix(vec4(material_data.RoughnessMetallicSpecular.rgb, alpha),
+                                    texture(u_RoughnessMetallicSpecular, tex_coords),
+                                    texture_intensity);
     
-    Normal = vec4(normal, 0.0);
+    vec3 view_direction = normalize(scene_data.CameraPosition.xyz - position);
+    texture_intensity = material_bit(NormalIndex);
     
-    value_intensity = 0.0 - material_bit(EmissionIndex);
-    Emission = mix(texture(Textures[EmissionIndex], tex_coords),
-                   vec4(material_data.Emission, 0.0),
-                   value_intensity);
+    Normal = mix(vec4(normal, alpha),
+                 vec4(ApplyNormalMap(normal, view_direction, tex_coords), alpha),
+                 texture_intensity);
+    
+    texture_intensity = material_bit(EmissionIndex);
+    Emission = mix(vec4(material_data.Emission.rgb, alpha),
+                   vec4(texture(u_Emission, tex_coords).rgb, alpha),
+                   texture_intensity);
 }
 
 #endif

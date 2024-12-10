@@ -202,7 +202,11 @@ bool Application::Init()
         if (!layer->_Init(layer))
             return false;
     }
+    
+    if (!AssetManager.Init(&Context))
+        return false;
 
+    AssetManager.LoadResources(&Context);
 
     return true;
 }
@@ -249,6 +253,7 @@ void Application::Run()
             else if (event.Type == EventType::FileCreated)
             {
                 std::cout << "File created " << event.File.Path << '\n';
+                AssetManager.TryLoadResource(&Context, event.File.Path);
             }
             else if (event.Type == EventType::FileDeleted)
             {
@@ -258,15 +263,17 @@ void Application::Run()
             {
                 std::cout << "File modified " << event.File.Path << '\n';
                 
-                auto shader_name = std::filesystem::path(event.File.Path).stem().string();
-                if (auto shader = AssetManager.GetShader(shader_name))
-                {
-                    AssetManager.LoadShader(&Context, event.File.Path);
-                }
+                // auto shader_name = std::filesystem::path(event.File.Path).stem().string();
+                // if (auto shader = AssetManager.GetShader(shader_name))
+                // {
+                //     AssetManager.LoadShader(&Context, event.File.Path);
+                // }
+                AssetManager.TryLoadResource(&Context, event.File.Path);
             }
             else if (event.Type == EventType::FileRenamed)
             {
                 std::cout << "File renamed " << event.Rename.NewName << " <- " << event.Rename.OldName << '\n';
+                AssetManager.TryLoadResource(&Context, event.Rename.NewName);
             }
 
             if (!window_minimized)
